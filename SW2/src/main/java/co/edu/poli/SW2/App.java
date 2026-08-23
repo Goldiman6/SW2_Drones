@@ -2,20 +2,22 @@ package co.edu.poli.SW2;
 
 import com.drone.controller.DroneController;
 import com.drone.dao.DroneDAO;
-import com.drone.dao.DroneDAOFileImpl;
 import com.drone.view.DroneView;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
-Ensamble MVC
+ * PUNTO DE ENTRADA DE LA APLICACIÓN.
+ * Aquí es donde se ensambla el patrón MVC (Modelo-Vista-Controlador).
+ * Se instancian las piezas por separado y se conectan entre sí para 
+ * que la aplicación pueda arrancar.
  */
 public class App extends Application {
 
     @Override
     public void start(Stage stage) {
-        DroneDAO droneDAO = new DroneDAOFileImpl();
+        DroneDAO droneDAO = new DroneDAO();
         DroneController droneController = new DroneController(droneDAO);
 
 
