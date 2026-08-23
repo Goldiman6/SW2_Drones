@@ -11,12 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO ESTÁNDAR (instancia normal).
+ * DAO ESTÁNDAR 
  * Cada vez que se hace "new DroneDAOEstandar()", se crea una instancia NUEVA e INDEPENDIENTE.
  * Si se crearan dos instancias, cada una tendría su propia lista en memoria,
  * lo que podría causar inconsistencias de datos.
  * 
- * Persiste los datos en un archivo JSON usando Jackson.
+ * Persiste los datos en un archivo JSON
  */
 public class DroneDAOEstandar {
     private final String FILE_PATH = "drones_estandar.json";
@@ -71,7 +71,7 @@ public class DroneDAOEstandar {
         saveToFile();
     }
 
-    /** READ: Busca un dron por su ID */
+    
     public Drone read(int id) {
         return drones.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
     }
