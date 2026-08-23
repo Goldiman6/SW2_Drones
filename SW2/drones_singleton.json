@@ -1,0 +1,9 @@
+[ {
+  "id" : 2,
+  "serial" : "SVK-05",
+  "modelo" : "Killbill",
+  "fabricante" : "xiaomi",
+  "peso" : 1.3,
+  "piloto" : "John Ramirez",
+  "sensores" : [ ]
+} ]

@@ -1,0 +1,9 @@
+[ {
+  "id" : 1,
+  "serial" : "SRL-002",
+  "modelo" : "Maverick",
+  "fabricante" : "Sony",
+  "peso" : 0.8,
+  "piloto" : "Teresa Lisbon",
+  "sensores" : [ ]
+} ]

@@ -12,7 +12,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 /**
- * Interfaz grafica de usuario 
+ * LA VISTA (V en MVC).
+ * Dibuja los botones, la tabla y los campos de texto en pantalla.
+ * Incluye validaciones de campos y ventanas emergentes demostrativas.
  */
 public class DroneView extends VBox {
 
@@ -39,16 +41,26 @@ public class DroneView extends VBox {
         setPadding(new Insets(15));
         setSpacing(15);
 
+        // Indicador del modo activo
+        String modoTexto = controller.getModo().name();
+        Label modoLabel = new Label("Arquitectura activa: " + modoTexto);
+        modoLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+
         // Form Area
         GridPane formPane = new GridPane();
         formPane.setHgap(10);
         formPane.setVgap(10);
 
         serialField = new TextField();
+        serialField.setPromptText("Ej: SRL-001");
         modeloField = new TextField();
+        modeloField.setPromptText("Ej: Mavic 3");
         fabricanteField = new TextField();
+        fabricanteField.setPromptText("Ej: DJI");
         pesoField = new TextField();
+        pesoField.setPromptText("Ej: 0.9");
         pilotoField = new TextField();
+        pilotoField.setPromptText("Ej: Juan Perez");
 
         formPane.add(new Label("Serial:"), 0, 0);
         formPane.add(serialField, 1, 0);
@@ -97,7 +109,7 @@ public class DroneView extends VBox {
         table.setItems(droneData);
 
         // Add Components to VBox
-        getChildren().addAll(formPane, buttonBox, table);
+        getChildren().addAll(modoLabel, formPane, buttonBox, table);
 
         // Event Handlers
         addButton.setOnAction(e -> addDrone());
@@ -121,53 +133,131 @@ public class DroneView extends VBox {
         });
     }
 
-    private void refreshTable() {
-        droneData.setAll(controller.getAllDrones());
+    // ==================== VALIDACIÓN DE CAMPOS ====================
+
+    /**
+     * Valida que todos los campos del formulario estén completos.
+     * Si alguno está vacío, muestra un cuadro de error específico
+     * indicando cuál es el campo faltante.
+     * @return true si todos los campos son válidos, false si hay algún error.
+     */
+    private boolean validarCampos() {
+        if (serialField.getText().trim().isEmpty()) {
+            showAlert("Campo Requerido", "El campo 'Serial' es obligatorio.\nPor favor ingrese el número de serie del dron.");
+            serialField.requestFocus();
+            return false;
+        }
+        if (modeloField.getText().trim().isEmpty()) {
+            showAlert("Campo Requerido", "El campo 'Modelo' es obligatorio.\nPor favor ingrese el modelo del dron.");
+            modeloField.requestFocus();
+            return false;
+        }
+        if (fabricanteField.getText().trim().isEmpty()) {
+            showAlert("Campo Requerido", "El campo 'Fabricante' es obligatorio.\nPor favor ingrese el fabricante del dron.");
+            fabricanteField.requestFocus();
+            return false;
+        }
+        if (pesoField.getText().trim().isEmpty()) {
+            showAlert("Campo Requerido", "El campo 'Peso' es obligatorio.\nPor favor ingrese el peso del dron en kg.");
+            pesoField.requestFocus();
+            return false;
+        }
+        // Validar que el peso sea un número válido
+        try {
+            float peso = Float.parseFloat(pesoField.getText().trim());
+            if (peso <= 0) {
+                showAlert("Valor Inválido", "El campo 'Peso' debe ser un número mayor a 0.");
+                pesoField.requestFocus();
+                return false;
+            }
+        } catch (NumberFormatException ex) {
+            showAlert("Valor Inválido", "El campo 'Peso' debe ser un número válido.\nEjemplo: 0.9 o 2.5");
+            pesoField.requestFocus();
+            return false;
+        }
+        if (pilotoField.getText().trim().isEmpty()) {
+            showAlert("Campo Requerido", "El campo 'Piloto' es obligatorio.\nPor favor ingrese el nombre del piloto asignado.");
+            pilotoField.requestFocus();
+            return false;
+        }
+        return true;
     }
 
+    // ==================== OPERACIONES CRUD ====================
+
     private void addDrone() {
-        try {
-            float peso = Float.parseFloat(pesoField.getText());
-            controller.addDrone(
-                    serialField.getText(),
-                    modeloField.getText(),
-                    fabricanteField.getText(),
-                    peso,
-                    pilotoField.getText()
-            );
-            refreshTable();
-            clearForm();
-        } catch (NumberFormatException ex) {
-            showAlert("Error", "Peso debe ser un número válido.");
+        // Primero validar que todos los campos estén completos
+        if (!validarCampos()) {
+            return;
         }
+
+        float peso = Float.parseFloat(pesoField.getText().trim());
+        controller.addDrone(
+                serialField.getText().trim(),
+                modeloField.getText().trim(),
+                fabricanteField.getText().trim(),
+                peso,
+                pilotoField.getText().trim()
+        );
+        refreshTable();
+
+        // Mostrar ventana de éxito con demostración de arquitectura
+        showSuccessWithDemo(
+                serialField.getText().trim(),
+                modeloField.getText().trim(),
+                fabricanteField.getText().trim(),
+                peso,
+                pilotoField.getText().trim()
+        );
+
+        clearForm();
     }
 
     private void updateDrone() {
         if (selectedDrone != null) {
-            try {
-                float peso = Float.parseFloat(pesoField.getText());
-                controller.updateDrone(
-                        selectedDrone.getId(),
-                        serialField.getText(),
-                        modeloField.getText(),
-                        fabricanteField.getText(),
-                        peso,
-                        pilotoField.getText()
-                );
-                refreshTable();
-                clearForm();
-            } catch (NumberFormatException ex) {
-                showAlert("Error", "Peso debe ser un número válido.");
+            // Validar campos antes de actualizar
+            if (!validarCampos()) {
+                return;
             }
+
+            float peso = Float.parseFloat(pesoField.getText().trim());
+            controller.updateDrone(
+                    selectedDrone.getId(),
+                    serialField.getText().trim(),
+                    modeloField.getText().trim(),
+                    fabricanteField.getText().trim(),
+                    peso,
+                    pilotoField.getText().trim()
+            );
+            refreshTable();
+            showInfo("Dron Actualizado", "El dron con ID " + selectedDrone.getId() + " fue actualizado exitosamente.");
+            clearForm();
         }
     }
 
     private void deleteDrone() {
         if (selectedDrone != null) {
-            controller.deleteDrone(selectedDrone.getId());
-            refreshTable();
-            clearForm();
+            // Confirmación antes de eliminar
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("Confirmar Eliminación");
+            confirmacion.setHeaderText("¿Está seguro de eliminar este dron?");
+            confirmacion.setContentText("ID: " + selectedDrone.getId() + 
+                    "\nSerial: " + selectedDrone.getSerial() +
+                    "\nModelo: " + selectedDrone.getModelo());
+
+            confirmacion.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    controller.deleteDrone(selectedDrone.getId());
+                    refreshTable();
+                    showInfo("Dron Eliminado", "El dron fue eliminado exitosamente.");
+                    clearForm();
+                }
+            });
         }
+    }
+
+    private void refreshTable() {
+        droneData.setAll(controller.getAllDrones());
     }
 
     private void clearForm() {
@@ -183,8 +273,54 @@ public class DroneView extends VBox {
         deleteButton.setDisable(true);
     }
 
+    // ==================== VENTANAS EMERGENTES ====================
+
+    /**
+     * Muestra una ventana emergente de ÉXITO al crear un dron.
+     * Incluye los datos del dron creado y la demostración de hashCodes
+     * para evidenciar la diferencia entre Estándar y Singleton.
+     */
+    private void showSuccessWithDemo(String serial, String modelo, String fabricante, float peso, String piloto) {
+        String demoHashCode = controller.generarDemoHashCode();
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Dron Creado Exitosamente");
+        alert.setHeaderText("El dron fue registrado correctamente");
+
+        String contenido = "═══ Datos del Dron ═══\n" +
+                "Serial: " + serial + "\n" +
+                "Modelo: " + modelo + "\n" +
+                "Fabricante: " + fabricante + "\n" +
+                "Peso: " + peso + " kg\n" +
+                "Piloto: " + piloto + "\n\n" +
+                "═══ Demostración de Arquitectura ═══\n\n" +
+                demoHashCode;
+
+        // Usar TextArea para mostrar contenido extenso
+        TextArea textArea = new TextArea(contenido);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setPrefHeight(350);
+        textArea.setPrefWidth(420);
+        textArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
+
+        alert.getDialogPane().setContent(textArea);
+        alert.getDialogPane().setPrefWidth(480);
+        alert.showAndWait();
+    }
+
+    /** Muestra un cuadro de error con el mensaje dado */
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /** Muestra un cuadro informativo */
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
