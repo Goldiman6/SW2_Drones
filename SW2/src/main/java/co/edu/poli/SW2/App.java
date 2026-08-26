@@ -26,50 +26,37 @@ public class App extends Application {
     }
 
     /**
-     * Muestra una ventana inicial con dos botones para que el usuario
+     * Muestra una ventana inicial con botones para que el usuario
      * elija la arquitectura antes de abrir la aplicación principal.
      */
     private void mostrarSelectorDeArquitectura(Stage stage) {
         // Título
-        Label titulo = new Label("Seleccione la Arquitectura");
-        titulo.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        Label titulo = new Label("Seleccione la Arquitectura principal a evaluar");
+        titulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        // Descripción Estándar
-        Label descEstandar = new Label(
-            "DAO Estándar:\n" +
-            "Crea una instancia NUEVA cada vez.\n" +
-            "Cada instancia es independiente."
-        );
-        descEstandar.setStyle("-fx-font-size: 12px; -fx-text-fill: #555;");
-
-        // Botón Estándar
-        Button btnEstandar = new Button("Iniciar con DAO Estándar");
-        btnEstandar.setStyle("-fx-font-size: 14px; -fx-pref-width: 280px; -fx-pref-height: 40px;");
+        // Botón 1: Estándar
+        Button btnEstandar = new Button("1. Arquitectura DAO Estándar (Creación Directa)");
+        btnEstandar.setStyle("-fx-font-size: 14px; -fx-pref-width: 380px; -fx-pref-height: 40px;");
         btnEstandar.setOnAction(e -> iniciarApp(stage, DroneService.Modo.ESTANDAR));
 
-        // Separador
-        Separator separador = new Separator();
-
-        // Descripción Singleton
-        Label descSingleton = new Label(
-            "DAO Singleton:\n" +
-            "Usa una ÚNICA instancia compartida.\n" +
-            "Garantiza consistencia de datos."
-        );
-        descSingleton.setStyle("-fx-font-size: 12px; -fx-text-fill: #555;");
-
-        // Botón Singleton
-        Button btnSingleton = new Button("Iniciar con DAO Singleton");
-        btnSingleton.setStyle("-fx-font-size: 14px; -fx-pref-width: 280px; -fx-pref-height: 40px; " +
-                             "-fx-background-color: #2196F3; -fx-text-fill: white;");
+        // Botón 2: Singleton
+        Button btnSingleton = new Button("2. Arquitectura Singleton (Creación Directa)");
+        btnSingleton.setStyle("-fx-font-size: 14px; -fx-pref-width: 380px; -fx-pref-height: 40px; " +
+                             "-fx-background-color: #4CAF50; -fx-text-fill: white;");
         btnSingleton.setOnAction(e -> iniciarApp(stage, DroneService.Modo.SINGLETON));
 
+        // Botón 3: Factory Method
+        Button btnFactory = new Button("3. Arquitectura Factory Method");
+        btnFactory.setStyle("-fx-font-size: 14px; -fx-pref-width: 380px; -fx-pref-height: 40px; " +
+                             "-fx-background-color: #2196F3; -fx-text-fill: white;");
+        btnFactory.setOnAction(e -> iniciarApp(stage, DroneService.Modo.FACTORY));
+
         // Layout
-        VBox layout = new VBox(15, titulo, descEstandar, btnEstandar, separador, descSingleton, btnSingleton);
+        VBox layout = new VBox(20, titulo, btnEstandar, btnSingleton, btnFactory);
         layout.setPadding(new Insets(30));
         layout.setAlignment(Pos.CENTER);
 
-        Scene scene = new Scene(layout, 400, 380);
+        Scene scene = new Scene(layout, 450, 300);
         stage.setTitle("Gestión de Drones - Selección de Arquitectura");
         stage.setScene(scene);
         stage.show();
@@ -93,13 +80,18 @@ public class App extends Application {
             DroneService servicio2 = new DroneService(modo);
             System.out.println("¿Son la misma instancia del DAO? Ambos servicios usan el MISMO DAO interno.");
             System.out.println("--- Fin demostración ---\n");
-        } else {
+        } else if (modo == DroneService.Modo.ESTANDAR) {
             System.out.println("\n--- Demostración Estándar ---");
             System.out.println("Creando instancia 1...");
             DroneService servicio1 = new DroneService(modo);
             System.out.println("Creando instancia 2...");
             DroneService servicio2 = new DroneService(modo);
             System.out.println("Cada servicio creó su PROPIO DAO con hashCode diferente.");
+            System.out.println("--- Fin demostración ---\n");
+        } else if (modo == DroneService.Modo.FACTORY) {
+            System.out.println("\n--- Demostración Factory Method ---");
+            System.out.println("La persistencia será Singleton.");
+            System.out.println("La creación de los Drones será manejada por DroneFactory.");
             System.out.println("--- Fin demostración ---\n");
         }
 

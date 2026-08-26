@@ -1,9 +1,0 @@
-[ {
-  "id" : 1,
-  "serial" : "ssvr",
-  "modelo" : "colosus",
-  "fabricante" : "sony",
-  "peso" : 0.9,
-  "piloto" : "Pablo Jimenez",
-  "sensores" : [ ]
-} ]

@@ -15,10 +15,11 @@ import java.util.List;
  */
 public class DroneService {
 
-    /** Modos disponibles para elegir la arquitectura del DAO */
+    /** Modos disponibles para elegir la arquitectura principal a evaluar */
     public enum Modo {
-        ESTANDAR,   // Crea una instancia nueva del DAO cada vez
-        SINGLETON   // Usa una única instancia compartida
+        ESTANDAR,   // Crea instancia nueva del DAO cada vez, creación directa
+        SINGLETON,  // Usa única instancia del DAO, creación directa
+        FACTORY     // Usa Singleton para persistencia, pero obliga a crear por Factory
     }
 
     private final Modo modo;
@@ -27,16 +28,18 @@ public class DroneService {
 
     /**
      * Constructor que recibe el modo de operación.
-     * Dependiendo del modo, inicializa el DAO correspondiente.
      */
     public DroneService(Modo modo) {
         this.modo = modo;
         if (modo == Modo.ESTANDAR) {
             this.daoEstandar = new DroneDAOEstandar();
             System.out.println("[Servicio] Modo ESTÁNDAR activado.");
-        } else {
+        } else if (modo == Modo.SINGLETON) {
             this.daoSingleton = DroneDAOSingleton.getInstance();
             System.out.println("[Servicio] Modo SINGLETON activado.");
+        } else if (modo == Modo.FACTORY) {
+            this.daoSingleton = DroneDAOSingleton.getInstance();
+            System.out.println("[Servicio] Modo FACTORY activado.");
         }
     }
 
@@ -52,7 +55,7 @@ public class DroneService {
     }
 
     /** Delega la lectura por ID al DAO activo */
-    public Drone read(int id) {
+    public Drone read(String id) {
         if (modo == Modo.ESTANDAR) {
             return daoEstandar.read(id);
         } else {
@@ -79,7 +82,7 @@ public class DroneService {
     }
 
     /** Delega la eliminación al DAO activo */
-    public void delete(int id) {
+    public void delete(String id) {
         if (modo == Modo.ESTANDAR) {
             daoEstandar.delete(id);
         } else {
@@ -93,29 +96,29 @@ public class DroneService {
     }
 
     /**
-     * Genera un texto demostrativo que compara hashCodes para evidenciar
-     * la diferencia entre Estándar y Singleton.
-     * Se muestra al usuario en una ventana emergente al crear un dron.
+     * Genera un texto demostrativo que muestra qué arquitectura se usó.
      */
-    public String generarDemoHashCode() {
+    public String generarDemoHashCode(String tipoDron) {
         StringBuilder sb = new StringBuilder();
 
         if (modo == Modo.SINGLETON) {
-            // Solicitar la instancia dos veces: debe ser LA MISMA
             DroneDAOSingleton ref1 = DroneDAOSingleton.getInstance();
             DroneDAOSingleton ref2 = DroneDAOSingleton.getInstance();
-
             sb.append("══════ PATRÓN SINGLETON ══════\n\n");
             sb.append("Referencia 1 → hashCode: ").append(ref1.hashCode()).append("\n");
             sb.append("Referencia 2 → hashCode: ").append(ref2.hashCode()).append("\n");
-        } else {
-            // Crear dos instancias nuevas: deben ser DIFERENTES
+        } else if (modo == Modo.ESTANDAR) {
             DroneDAOEstandar ref1 = new DroneDAOEstandar();
             DroneDAOEstandar ref2 = new DroneDAOEstandar();
-
             sb.append("══════ DAO ESTÁNDAR ══════\n\n");
             sb.append("Instancia 1 → hashCode: ").append(ref1.hashCode()).append("\n");
             sb.append("Instancia 2 → hashCode: ").append(ref2.hashCode()).append("\n");
+        } else if (modo == Modo.FACTORY) {
+            sb.append("══════ FACTORY METHOD ══════\n\n");
+            sb.append("El Dron de tipo [").append(tipoDron).append("]\n");
+            sb.append("fue creado delegando la responsabilidad a la\n");
+            sb.append("fábrica estática (DroneFactory.crearDrone).\n");
+            sb.append("El controlador NO usó 'new Drone...()' directamente.");
         }
 
         return sb.toString();

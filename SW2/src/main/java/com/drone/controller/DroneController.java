@@ -19,10 +19,34 @@ public class DroneController {
         this.droneService = droneService;
     }
 
-    /** Recibe los datos desde la vista, arma el objeto Drone y le pide al Servicio que lo guarde */
-    public void addDrone(String serial, String modelo, String fabricante, float peso, String piloto) {
-        Drone drone = new Drone(0, serial, modelo, fabricante, peso, piloto, null);
-        droneService.create(drone);
+    /** Recibe los datos desde la vista y crea el objeto según el modo arquitectónico activo */
+    public void addDrone(String tipo, String serial, String modelo, String fabricante, double peso, double capacidad, boolean termica) {
+        Drone drone = null;
+
+        if (droneService.getModo() == DroneService.Modo.FACTORY) {
+            // USANDO PATRÓN FACTORY METHOD
+            drone = com.drone.servicios.DroneFactory.crearDrone(tipo, serial, modelo, fabricante, peso, capacidad, termica);
+        } else {
+            // USANDO CREACIÓN DIRECTA (Normal) con modelo simplificado
+            drone = new Drone();
+            drone.setTipo(tipo);
+            drone.setSerial(serial);
+            drone.setModelo(modelo);
+            drone.setFabricante(fabricante);
+            drone.setPeso(peso);
+            
+            if ("Agricultura".equalsIgnoreCase(tipo)) {
+                drone.setCapacidadTanque(capacidad);
+                drone.setDeteccionTermica(null);
+            } else if ("Vigilancia".equalsIgnoreCase(tipo)) {
+                drone.setDeteccionTermica(termica);
+                drone.setCapacidadTanque(null);
+            }
+        }
+
+        if (drone != null) {
+            droneService.create(drone);
+        }
     }
 
     /** Le pide al Servicio la lista completa para enviarla a la tabla de la vista */
@@ -30,14 +54,39 @@ public class DroneController {
         return droneService.readAll();
     }
 
-    /** Arma el objeto Drone con el ID existente y los datos nuevos, y le pide al Servicio que lo actualice */
-    public void updateDrone(int id, String serial, String modelo, String fabricante, float peso, String piloto) {
-        Drone drone = new Drone(id, serial, modelo, fabricante, peso, piloto, null);
-        droneService.update(drone);
+    /** Crea un dron, le inyecta el ID existente, y al Servicio que lo actualice */
+    public void updateDrone(String id, String tipo, String serial, String modelo, String fabricante, double peso, double capacidad, boolean termica) {
+        Drone drone = null;
+
+        if (droneService.getModo() == DroneService.Modo.FACTORY) {
+            drone = com.drone.servicios.DroneFactory.crearDrone(tipo, serial, modelo, fabricante, peso, capacidad, termica);
+        } else {
+            // USANDO CREACIÓN DIRECTA (Normal) con modelo simplificado
+            drone = new Drone();
+            drone.setId(id);
+            drone.setTipo(tipo);
+            drone.setSerial(serial);
+            drone.setModelo(modelo);
+            drone.setFabricante(fabricante);
+            drone.setPeso(peso);
+            
+            if ("Agricultura".equalsIgnoreCase(tipo)) {
+                drone.setCapacidadTanque(capacidad);
+                drone.setDeteccionTermica(null);
+            } else if ("Vigilancia".equalsIgnoreCase(tipo)) {
+                drone.setDeteccionTermica(termica);
+                drone.setCapacidadTanque(null);
+            }
+        }
+        
+        if (drone != null) {
+            drone.setId(id); // Asegurar que mantiene su ID
+            droneService.update(drone);
+        }
     }
 
     /** Le pide al Servicio que elimine el dron que corresponda a este ID */
-    public void deleteDrone(int id) {
+    public void deleteDrone(String id) {
         droneService.delete(id);
     }
 
@@ -46,8 +95,8 @@ public class DroneController {
         return droneService.getModo();
     }
 
-    /** Genera el texto demostrativo de hashCodes para la ventana emergente */
-    public String generarDemoHashCode() {
-        return droneService.generarDemoHashCode();
+    /** Genera el texto demostrativo de la arquitectura para la ventana emergente */
+    public String generarDemoHashCode(String tipoDron) {
+        return droneService.generarDemoHashCode(tipoDron);
     }
 }

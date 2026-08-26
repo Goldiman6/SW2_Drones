@@ -1,39 +1,44 @@
 package com.drone.model;
 
 import java.io.Serializable;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Contiene la informacion de drone (Modelo)
+ * Modelo .
  */
 public class Drone implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int id;
+    
+    private String id;
+    private String tipo; // "Agricultura" o "Vigilancia"
     private String serial;
     private String modelo;
     private String fabricante;
-    private float peso;
-    private String piloto;
-    private List<Sensor> sensores;
+    private double peso;
+    
+    // Campos opcionales según el tipo
+    private Double capacidadTanque; // Para Agricultura
+    private Boolean deteccionTermica; // Para Vigilancia
 
-    public Drone() {
-        this.sensores = new ArrayList<>();
-    }
+    public Drone() {}
 
-    public Drone(int id, String serial, String modelo, String fabricante, float peso, String piloto, List<Sensor> sensores) {
+    public Drone(String id, String tipo, String serial, String modelo, String fabricante, double peso, 
+                 Double capacidadTanque, Boolean deteccionTermica) {
         this.id = id;
+        this.tipo = tipo;
         this.serial = serial;
         this.modelo = modelo;
         this.fabricante = fabricante;
         this.peso = peso;
-        this.piloto = piloto;
-        this.sensores = sensores != null ? sensores : new ArrayList<>();
+        this.capacidadTanque = capacidadTanque;
+        this.deteccionTermica = deteccionTermica;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    // Getters y Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
 
     public String getSerial() { return serial; }
     public void setSerial(String serial) { this.serial = serial; }
@@ -44,12 +49,12 @@ public class Drone implements Serializable {
     public String getFabricante() { return fabricante; }
     public void setFabricante(String fabricante) { this.fabricante = fabricante; }
 
-    public float getPeso() { return peso; }
-    public void setPeso(float peso) { this.peso = peso; }
+    public double getPeso() { return peso; }
+    public void setPeso(double peso) { this.peso = peso; }
 
-    public String getPiloto() { return piloto; }
-    public void setPiloto(String piloto) { this.piloto = piloto; }
+    public Double getCapacidadTanque() { return capacidadTanque; }
+    public void setCapacidadTanque(Double capacidadTanque) { this.capacidadTanque = capacidadTanque; }
 
-    public List<Sensor> getSensores() { return sensores; }
-    public void setSensores(List<Sensor> sensores) { this.sensores = sensores; }
+    public Boolean getDeteccionTermica() { return deteccionTermica; }
+    public void setDeteccionTermica(Boolean deteccionTermica) { this.deteccionTermica = deteccionTermica; }
 }
