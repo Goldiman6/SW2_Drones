@@ -3,20 +3,19 @@ package co.edu.poli.SW2;
 import com.drone.controller.DroneController;
 import com.drone.servicios.DroneService;
 import com.drone.view.DroneView;
+
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
- * PUNTO DE ENTRADA DE LA APLICACIÓN.
- * Al iniciar, muestra una ventana de selección donde el usuario elige
- * qué arquitectura de DAO usar: Estándar o Singleton.
- * Luego ensambla el patrón MVC con el modo elegido.
+* muestra una ventana de selección donde el usuario elige
+ * qué arquitectura a usar
  */
 public class App extends Application {
 
