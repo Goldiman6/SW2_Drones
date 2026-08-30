@@ -1,31 +1,36 @@
 package com.drone.model;
 
-import java.util.Date;
+import java.util.List;
 
 public class Mision {
-    private int id;
-    private String mision;
+    private String id;
+    private String nombre;
     private String ubicacion;
-    private Date fecha;
+    private String fecha;
+    private List<Drone> drones;
 
     public Mision() {}
 
-    public Mision(int id, String mision, String ubicacion, Date fecha) {
+    public Mision(String id, String nombre, String ubicacion, String fecha, List<Drone> drones) {
         this.id = id;
-        this.mision = mision;
+        this.nombre = nombre;
         this.ubicacion = ubicacion;
         this.fecha = fecha;
+        this.drones = drones;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public String getMision() { return mision; }
-    public void setMision(String mision) { this.mision = mision; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
     public String getUbicacion() { return ubicacion; }
     public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
 
-    public Date getFecha() { return fecha; }
-    public void setFecha(Date fecha) { this.fecha = fecha; }
+    public String getFecha() { return fecha; }
+    public void setFecha(String fecha) { this.fecha = fecha; }
+
+    public List<Drone> getDrones() { return drones; }
+    public void setDrones(List<Drone> drones) { this.drones = drones; }
 }

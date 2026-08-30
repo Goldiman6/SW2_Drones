@@ -3,6 +3,7 @@ module co.edu.poli.SW2 {
     requires javafx.fxml;
     requires transitive javafx.graphics;
     requires com.fasterxml.jackson.databind;
+    requires java.sql;
 
     opens co.edu.poli.SW2 to javafx.fxml;
     opens com.drone.model to javafx.base, com.fasterxml.jackson.databind;
