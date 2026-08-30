@@ -1,0 +1,7 @@
+﻿# Renombra este archivo a "database.properties" y coloca tus credenciales locales
+# de PostgreSQL para ejecutar el proyecto. Este archivo .example SI se sube a GitHub, 
+# pero tu "database.properties" real NO se sube.
+
+db.url=jdbc:postgresql://localhost:5432/drones
+db.user=postgres
+db.password=PON_TU_CONTRASEÑA_AQUI

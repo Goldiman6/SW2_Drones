@@ -50,7 +50,7 @@ public class DroneView extends VBox {
         setSpacing(15);
 
         // Top Buttons (Singleton + Builder + Prototype)
-        btnTestSingleton = new Button("Probar Conexin Singleton");
+        btnTestSingleton = new Button("Probar Conexion Singleton");
         btnTestSingleton.setOnAction(e -> testSingleton());
 
         btnAddBuilder = new Button("Crear con Builder (Solo Agricultura)");
@@ -325,9 +325,8 @@ public class DroneView extends VBox {
     private void addViaBuilder() {
         try {
             // Un Builder real suele usarse para configurar objetos complejos paso a paso, 
-            // a menudo sin que el usuario tenga que llenar cada detalle.
-            // Para demostrar esto, ignoraremos los campos de texto y el Builder crear un
-            // "Dron de Agricultura Preconfigurado de Alta Gama".
+            // el Builder crear un
+            // "Dron de Agricultura Preconfigurado ".
             
             String serialBuild = "BUILDER-" + (int)(Math.random() * 1000);
             Agricultura a = controller.addDroneBuilder(
@@ -343,8 +342,7 @@ public class DroneView extends VBox {
                       "El Builder acaba de ensamblar y guardar un Dron Preconfigurado automticamente:\n\n" +
                       "- Modelo: AgriPro Max\n" +
                       "- Capacidad: 150 Litros\n\n" +
-                      "As se demuestra que el Builder arma el objeto por partes complejas " +
-                      "en segundo plano.\n" +
+                       
                       "Espacio de memoria (hashCode): " + a.hashCode(), 
                       Alert.AlertType.INFORMATION);
         } catch (Exception e) {
@@ -361,8 +359,7 @@ public class DroneView extends VBox {
                 showAlert("Prototype Pattern", 
                           "Dron Vigilancia CLONADO exitosamente.\n" +
                           "Espacio memoria ORIGINAL: " + original.hashCode() + "\n" +
-                          "Espacio memoria CLON: " + clon.hashCode() + "\n\n" +
-                          "Al agregar sufijos aleatorios, puedes clonar este dron infinidad de veces sin errores de BD.", 
+                          "Espacio memoria CLON: " + clon.hashCode() + "\n\n" , 
                           Alert.AlertType.INFORMATION);
                 clearForm();
             } catch (Exception e) { 
@@ -378,7 +375,7 @@ public class DroneView extends VBox {
             }
             try {
                 // Guardamos el ID ANTES de refrescar la tabla, ya que el refresco 
-                // limpia la seleccin y volvera a selectedDrone = null (causando el error)
+                // limpia la seleccin y volvera a selectedDrone = null (causando error)
                 String idActual = selectedDrone.getId();
                 
                 String tipo = tipoCombo.getValue();

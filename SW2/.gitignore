@@ -1,1 +1,40 @@
-/target/
+﻿# =============================================
+# CREDENCIALES Y CONFIGURACION LOCAL
+# =============================================
+# Este archivo NUNCA debe subirse al repositorio.
+# Contiene la contrasena real de la base de datos.
+# Para configurarlo: copie database.properties.example,
+# renombrelo a database.properties y coloque sus credenciales.
+src/main/resources/database.properties
+
+# =============================================
+# ARCHIVOS DE COMPILACION DE JAVA Y MAVEN
+# =============================================
+target/
+*.class
+*.jar
+*.war
+
+# =============================================
+# ARCHIVOS DE IDEs (Eclipse, IntelliJ, VS Code)
+# =============================================
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# =============================================
+# ARCHIVOS DEL SISTEMA OPERATIVO
+# =============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =============================================
+# LOGS Y ARCHIVOS TEMPORALES
+# =============================================
+*.log
+*.tmp
