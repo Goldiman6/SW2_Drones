@@ -19,16 +19,4 @@ public class Vigilancia extends Drone {
     public void setDeteccionTermica(boolean deteccionTermica) {
         this.deteccionTermica = deteccionTermica;
     }
-
-    @Override
-    public IPrototype clonar() {
-        Vigilancia clone = new Vigilancia();
-        clone.setId(this.getId());
-        clone.setSerial(this.getSerial());
-        clone.setModelo(this.getModelo());
-        clone.setFabricante(this.getFabricante());
-        clone.setPeso(this.getPeso());
-        clone.setDeteccionTermica(this.isDeteccionTermica());
-        return clone;
-    }
 }

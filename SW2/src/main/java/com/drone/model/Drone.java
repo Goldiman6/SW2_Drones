@@ -1,9 +1,8 @@
 package com.drone.model;
 
 import java.io.Serializable;
-import java.util.List;
 
-public abstract class Drone implements Serializable, IPrototype {
+public abstract class Drone implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private String id;
@@ -11,8 +10,6 @@ public abstract class Drone implements Serializable, IPrototype {
     private String modelo;
     private String fabricante;
     private double peso;
-    
-    // Ignored properties per instruction: piloto, sensor
 
     public Drone() {}
 
@@ -38,7 +35,4 @@ public abstract class Drone implements Serializable, IPrototype {
 
     public double getPeso() { return peso; }
     public void setPeso(double peso) { this.peso = peso; }
-
-    @Override
-    public abstract IPrototype clonar();
 }

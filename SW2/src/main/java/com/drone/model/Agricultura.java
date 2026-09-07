@@ -19,16 +19,4 @@ public class Agricultura extends Drone {
     public void setCapacidadTanque(double capacidadTanque) {
         this.capacidadTanque = capacidadTanque;
     }
-
-    @Override
-    public IPrototype clonar() {
-        Agricultura clone = new Agricultura();
-        clone.setId(this.getId());
-        clone.setSerial(this.getSerial());
-        clone.setModelo(this.getModelo());
-        clone.setFabricante(this.getFabricante());
-        clone.setPeso(this.getPeso());
-        clone.setCapacidadTanque(this.getCapacidadTanque());
-        return clone;
-    }
 }
