@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * NOTA: Estos tests requieren que la base de datos PostgreSQL este activa
  *       con las credenciales configuradas en {@link Singleton}.
  */
-@DisplayName("Tests de Integracion - Patron Prototype + Base de Datos")
+@DisplayName("Pruebas - Patron Prototype ")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PrototypeTest {
 
