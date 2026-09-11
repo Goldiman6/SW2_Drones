@@ -4,17 +4,22 @@ import com.drone.controller.DroneController;
 import com.drone.model.Agricultura;
 import com.drone.model.Drone;
 import com.drone.model.Vigilancia;
+import com.drone.servicios.BateriaDecorator;
 import com.drone.servicios.ControlAutonomo;
 import com.drone.servicios.ControlBasico;
+import com.drone.servicios.DroneBasico;
+import com.drone.servicios.DroneComponent;
 import com.drone.servicios.TipoControl;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /**
@@ -58,6 +63,9 @@ public class DroneView extends VBox {
     private RadioButton rbBasico;
     private RadioButton rbAutonomo;
     private Button btnLimpiarControl;
+
+    // --- PATRON DECORATOR: CheckBox para Extra (OPCIONAL) ---
+    private CheckBox chkBateria;
 
     // Dron actualmente seleccionado en la tabla (modo edicion)
     private Drone selectedDrone;
@@ -138,6 +146,13 @@ public class DroneView extends VBox {
         Label lblControl = new Label("Tipo de Control (opcional - Bridge):");
         HBox bridgeBox = new HBox(12, lblControl, rbBasico, rbAutonomo, btnLimpiarControl);
         bridgeBox.setPadding(new Insets(5, 0, 5, 0));
+
+        // ----------------------------------------------------------------
+        // SECCION 3.5: Patron Decorator - Extras (OPCIONAL)
+        // ----------------------------------------------------------------
+        chkBateria = new CheckBox("Agregar bateria adicional?");
+        HBox decoratorBox = new HBox(12, chkBateria);
+        decoratorBox.setPadding(new Insets(5, 0, 5, 0));
 
         // ----------------------------------------------------------------
         // SECCION 4: Botones de accion CRUD
@@ -232,7 +247,7 @@ public class DroneView extends VBox {
         });
 
         // Agregar todos los nodos al VBox principal
-        getChildren().addAll(topBox, formPane, bridgeBox, actionBox, table);
+        getChildren().addAll(topBox, formPane, bridgeBox, decoratorBox, actionBox, table);
     }
 
     // ----------------------------------------------------------------
@@ -275,6 +290,38 @@ public class DroneView extends VBox {
                "        v\n" +
                "  Dron: " + dron.getModelo() + " [ID: " + dron.getId() + "]\n" +
                descripcion;
+    }
+
+    /**
+     * Construye el bloque de texto del Patron Decorator para el Alert.
+     * Si el CheckBox de bateria no esta seleccionado, retorna cadena vacia.
+     * Muestra la ruta completa: Drone -> DroneBasico -> BateriaDecorator -> getDescription().
+     *
+     * @param dron          El dron recien creado.
+     * @param patronOrigen  El patron que creo el dron (ej: "Factory Method").
+     * @return Texto con la ruta del decorador y la descripcion enriquecida.
+     */
+    private String textoDecorator(Drone dron, String patronOrigen) {
+        if (!chkBateria.isSelected()) return "";
+
+        // Construccion de la cadena Decorator
+        DroneComponent base     = new DroneBasico(dron);
+        DroneComponent decorado = new BateriaDecorator(base);
+        String descripcionFinal = decorado.getDescription();
+
+        return "\n\n========== PATRON DECORATOR ==========\n" +
+               "Ruta de decoracion:\n" +
+               "  [" + patronOrigen + "] creo el Drone\n" +
+               "        |\n" +
+               "        v\n" +
+               "  DroneBasico(dron) [DroneComponent]\n" +
+               "        |\n" +
+               "        v\n" +
+               "  BateriaDecorator.getDescription()\n" +
+               "        |\n" +
+               "        v\n" +
+               "  Resultado final del Dron decorado:\n\n" +
+               descripcionFinal;
     }
 
     // ----------------------------------------------------------------
@@ -381,9 +428,10 @@ public class DroneView extends VBox {
             String msg = "Dron creado por Factory Method.\n" +
                          "Fabrica concreta usada: [" + fabricaConcreta + "]\n" +
                          "Espacio de memoria (hashCode): " + d.hashCode() +
-                         textoControl(d, "Factory Method", fabricaConcreta);   // <-- Bridge
+                         textoControl(d, "Factory Method", fabricaConcreta) +   // <-- Bridge
+                         textoDecorator(d, "Factory Method");                   // <-- Decorator
 
-            showAlert("Factory Method", msg, Alert.AlertType.INFORMATION);
+            showScrollableAlert("Factory Method", msg);
             clearForm();
         } catch (Exception e) {
             showAlert("Error", "Error al crear el dron: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -404,9 +452,10 @@ public class DroneView extends VBox {
                          "Modelo: AgriPro Max\n" +
                          "Capacidad: 150 Litros\n" +
                          "Espacio de memoria (hashCode): " + a.hashCode() +
-                         textoControl(a, "Builder Pattern", "Builder -> buildAndSave()");   // <-- Bridge
+                         textoControl(a, "Builder Pattern", "Builder -> buildAndSave()") +   // <-- Bridge
+                         textoDecorator(a, "Builder Pattern");                              // <-- Decorator
 
-            showAlert("Builder Pattern", msg, Alert.AlertType.INFORMATION);
+            showScrollableAlert("Builder Pattern", msg);
         } catch (Exception e) {
             showAlert("Error", "Problema en el Builder: " + e.getMessage(), Alert.AlertType.ERROR);
         }
@@ -425,9 +474,10 @@ public class DroneView extends VBox {
             String msg = "Dron Vigilancia CLONADO exitosamente.\n" +
                          "Memoria ORIGINAL: " + original.hashCode() + "\n" +
                          "Memoria CLON:     " + clon.hashCode() +
-                         textoControl(clon, "Prototype Pattern", "Prototype -> cloneAndSave()");   // <-- Bridge
+                         textoControl(clon, "Prototype Pattern", "Prototype -> cloneAndSave()") +   // <-- Bridge
+                         textoDecorator(clon, "Prototype Pattern");                                // <-- Decorator
 
-            showAlert("Prototype Pattern", msg, Alert.AlertType.INFORMATION);
+            showScrollableAlert("Prototype Pattern", msg);
             clearForm();
         } catch (Exception e) {
             showAlert("Error", "Problema al clonar: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -452,10 +502,21 @@ public class DroneView extends VBox {
             boolean termica   = "Vigilancia".equals(tipo) && termicaCheck.isSelected();
 
             controller.updateDrone(idActual, tipo, serial, modelo, fabricante, peso, cap, termica);
+            
+            // Guardamos la referencia temporalmente y la actualizamos para el texto placebo
+            // Esto debe hacerse ANTES de refreshTable, ya que este limpia selectedDrone
+            Drone dronActualizado = selectedDrone;
+            dronActualizado.setSerial(serial);
+            dronActualizado.setModelo(modelo);
+            dronActualizado.setFabricante(fabricante);
+            dronActualizado.setPeso(peso);
+            
+            String msg = "El dron con ID " + idActual + " fue actualizado exitosamente." +
+                         textoControl(dronActualizado, "Actualizacion Directa", "CRUD Update") +
+                         textoDecorator(dronActualizado, "Actualizacion Directa");
+
             refreshTable();
-            showAlert("Dron Actualizado",
-                      "El dron con ID " + idActual + " fue actualizado exitosamente.",
-                      Alert.AlertType.INFORMATION);
+            showScrollableAlert("Dron Actualizado", msg);
             clearForm();
         } catch (Exception e) {
             showAlert("Error", "Error al actualizar dron: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -485,11 +546,46 @@ public class DroneView extends VBox {
         droneData.setAll(controller.getAllDrones());
     }
 
+    /**
+     * Muestra un Alert simple para mensajes cortos (validaciones, errores, confirmaciones).
+     */
     private void showAlert(String title, String message, Alert.AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * Muestra un Dialog con TextArea scrollable para mensajes largos
+     * (resultados de creacion que incluyen Bridge y/o Decorator).
+     * Limita el tamanio de la ventana a 500x400 px con scroll vertical.
+     */
+    private void showScrollableAlert(String title, String message) {
+        // TextArea de solo lectura con el mensaje completo
+        TextArea textArea = new TextArea(message);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setFont(javafx.scene.text.Font.font("Monospaced", 12));
+        VBox.setVgrow(textArea, Priority.ALWAYS);
+
+        VBox content = new VBox(textArea);
+        content.setPrefSize(480, 360);
+        content.setPadding(new Insets(10));
+
+        // Dialog personalizado con boton OK
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle(title);
+        dialog.setHeaderText(null);
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.getDialogPane().setPrefSize(500, 420);
+
+        // Icono de informacion en el dialogo
+        Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
+        if (okButton != null) okButton.getStyleClass().add("default");
+
+        dialog.showAndWait();
     }
 }
