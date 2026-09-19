@@ -9,6 +9,8 @@ module co.edu.poli.SW2 {
     opens com.drone.model to javafx.base, com.fasterxml.jackson.databind;
     opens com.drone.servicios to com.fasterxml.jackson.databind;
     opens com.drone.controller to com.fasterxml.jackson.databind;
-    
+    opens com.drone.view to javafx.fxml;
+    opens com.drone.dao to com.fasterxml.jackson.databind;
+
     exports co.edu.poli.SW2;
 }

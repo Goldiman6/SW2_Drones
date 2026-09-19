@@ -12,9 +12,9 @@ public class App extends Application {
     public void start(Stage stage) {
         DroneController droneController = new DroneController();
         DroneView root = new DroneView(droneController);
-        Scene scene = new Scene(root, 800, 600);
+        Scene scene = new Scene(root, 1100, 650);
         
-        stage.setTitle("Gestin de Drones - SW2");
+        stage.setTitle("Gestión de Drones - SW2");
         stage.setScene(scene);
         stage.show();
     }

@@ -35,7 +35,7 @@ import javafx.scene.layout.VBox;
  *  - RadioButtons opcionales para seleccionar el Tipo de Control (Patron Bridge):
  *    Control Basico o Control Autonomo.
  */
-public class DroneView extends VBox {
+public class DroneView extends HBox {
 
     private final DroneController controller;
     private final TableView<Drone> table;
@@ -73,8 +73,8 @@ public class DroneView extends VBox {
     private CheckBox chkBateria;
 
     // --- PATRON COMPOSITE: Selector de Sensores (OPCIONAL) ---
-    private ListView<String> listaSensores;
-
+    private MenuButton menuSensores;
+    private List<CheckBox> checkBoxesSensores;
     // Dron actualmente seleccionado en la tabla (modo edicion)
     private Drone selectedDrone;
 
@@ -165,17 +165,15 @@ public class DroneView extends VBox {
         // ----------------------------------------------------------------
         // SECCION 3.6: Patron Composite - Selector de Sensores (OPCIONAL)
         // ----------------------------------------------------------------
-        listaSensores = new ListView<>();
-        listaSensores.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        listaSensores.setPrefHeight(100);
-        listaSensores.getItems().add("Ninguno (Sin sensores)");
+        menuSensores = new MenuButton("Seleccionar Sensores...");
+        menuSensores.setPrefWidth(300);
+        checkBoxesSensores = new ArrayList<>();
         
-        List<String> nombresSensores = new ArrayList<>();
-        extraerNombres(GeneradorCompositeSensores.crearArbolSensores(), nombresSensores);
-        listaSensores.getItems().addAll(nombresSensores);
+        // Construimos el menu respetando la jerarquía visual
+        construirMenuSensores(GeneradorCompositeSensores.crearArbolSensores(), menuSensores, "", true);
 
-        Label lblComposite = new Label("Seleccionar Sensores (Mantén Ctrl para múltiple):");
-        HBox compositeBox = new HBox(12, lblComposite, listaSensores);
+        Label lblComposite = new Label("Seleccionar Sensores:");
+        HBox compositeBox = new HBox(12, lblComposite, menuSensores);
         compositeBox.setPadding(new Insets(5, 0, 5, 0));
 
         // ----------------------------------------------------------------
@@ -273,8 +271,18 @@ public class DroneView extends VBox {
             }
         });
 
-        // Agregar todos los nodos al VBox principal
-        getChildren().addAll(topBox, formPane, bridgeBox, decoratorBox, compositeBox, actionBox, table);
+        // Construir panel izquierdo (Formulario y Controles)
+        VBox leftPane = new VBox(15);
+        leftPane.setPadding(new Insets(0, 10, 0, 0)); // Espaciado derecho
+        leftPane.getChildren().addAll(topBox, formPane, bridgeBox, decoratorBox, compositeBox, actionBox);
+        leftPane.setPrefWidth(550);
+        leftPane.setMinWidth(450);
+
+        // Configurar la tabla para que ocupe el resto del espacio en la derecha
+        HBox.setHgrow(table, Priority.ALWAYS);
+
+        // Agregar paneles al HBox principal (Split screen)
+        getChildren().addAll(leftPane, table);
     }
 
     // ----------------------------------------------------------------
@@ -361,7 +369,11 @@ public class DroneView extends VBox {
         pesoField.clear();
         capacidadField.clear();
         termicaCheck.setSelected(false);
-        if (listaSensores != null) listaSensores.getSelectionModel().clearSelection();
+        if (checkBoxesSensores != null) {
+            for (CheckBox cb : checkBoxesSensores) {
+                cb.setSelected(false);
+            }
+        }
 
         tipoCombo.setDisable(false);
         table.getSelectionModel().clearSelection();
@@ -626,21 +638,53 @@ public class DroneView extends VBox {
     // ----------------------------------------------------------------
     
     /**
-     * Extrae recursivamente los nombres de los nodos del árbol.
+     * Construye los items del MenuButton de sensores respetando la jerarquia (indentacion).
+     * Solo los nodos hoja (sensores especificos) tendran un CheckBox seleccionable.
+     * Los nodos grupo se muestran como etiquetas para organizar visualmente.
      */
-    private void extraerNombres(ComponenteSensor nodo, List<String> lista) {
-        lista.add(nodo.getNombre());
+    private void construirMenuSensores(ComponenteSensor nodo, MenuButton menu, String indent, boolean isRoot) {
+        if (!isRoot) {
+            if (nodo.getHijos().isEmpty()) {
+                // Es hoja, agregar CheckBox con indentacion
+                CheckBox cb = new CheckBox(indent + nodo.getNombre());
+                // Guardamos el nombre real sin indentacion en el UserData
+                cb.setUserData(nodo.getNombre()); 
+                checkBoxesSensores.add(cb);
+                
+                CustomMenuItem item = new CustomMenuItem(cb);
+                item.setHideOnClick(false);
+                menu.getItems().add(item);
+            } else {
+                // Es grupo, agregar como texto visual sin checkbox
+                Label lbl = new Label(indent + nodo.getNombre());
+                lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #333333;");
+                CustomMenuItem item = new CustomMenuItem(lbl);
+                item.setHideOnClick(false); // Evitar que cierre al intentar hacer clic
+                menu.getItems().add(item);
+            }
+        }
+        
+        // Iterar hijos aumentando indentacion. La raíz no la indentamos, pero sus hijos sí.
+        String nextIndent = isRoot ? "" : indent + "    ";
         for (ComponenteSensor hijo : nodo.getHijos()) {
-            extraerNombres(hijo, lista);
+            construirMenuSensores(hijo, menu, nextIndent, false);
         }
     }
 
     /**
      * Retorna el texto formateado delegando la logica al servicio GestorSensoresDron
-     * para agregarlo al popup de la creación/actualización del dron.
+     * para agregarlo al popup de la creacion/actualizacion del dron.
      */
     private String textoComposite(String idDron) {
-        List<String> seleccionados = listaSensores.getSelectionModel().getSelectedItems();
+        List<String> seleccionados = new ArrayList<>();
+        if (checkBoxesSensores != null) {
+            for (CheckBox cb : checkBoxesSensores) {
+                if (cb.isSelected() && cb.getUserData() != null) {
+                    // Extraemos el nombre real guardado en UserData
+                    seleccionados.add(cb.getUserData().toString());
+                }
+            }
+        }
         return com.drone.servicios.GestorSensoresDron.acoplarYGenerarTexto(seleccionados, idDron);
     }
 

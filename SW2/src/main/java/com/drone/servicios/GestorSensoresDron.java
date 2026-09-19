@@ -30,37 +30,51 @@ public class GestorSensoresDron {
         log.append("[Servicio] Creando nuevo GrupoSensor (Composite) para el Dron [").append(droneId).append("]\n");
         ComponenteSensor sensoresDelDron = new GrupoSensor("Sensores Instalados en Dron " + droneId);
         
-        for (String nombre : seleccionados) {
-            if (nombre.startsWith("Ninguno")) continue; // Evitar procesar el item nulo
-            
-            log.append("[Servicio] Buscando '").append(nombre).append("' en el árbol maestro... ");
-            ComponenteSensor encontrado = buscarEnArbol(arbolMaestro, nombre);
-            
-            if (encontrado != null) {
-                log.append("¡Encontrado!\n");
-                log.append("[Servicio] Ejecutando: sensoresDelDron.agregar(encontrado)\n");
-                // Aquí demostramos la adición dinámica al Composite
-                sensoresDelDron.agregar(encontrado);
-            } else {
-                log.append("No encontrado.\n");
+        log.append("[Servicio] Recorriendo y clonando ramas jerárquicas seleccionadas...\n");
+        
+        // Clonamos recursivamente respetando la estructura jerárquica original
+        for (ComponenteSensor hijoMaestro : arbolMaestro.getHijos()) {
+            ComponenteSensor ramaClonada = clonarRama(hijoMaestro, seleccionados);
+            if (ramaClonada != null) {
+                sensoresDelDron.agregar(ramaClonada);
             }
         }
         
-        log.append("\n[Servicio] Extracción exitosa. Recorriendo la estructura dinámica ensamblada mediante polimorfismo (getHijos):\n\n");
+        log.append("\n[Servicio] Extracción exitosa. Estructura de árbol generada dinámicamente:\n\n");
         formatearEstructura(sensoresDelDron, 0, log);
         
         return log.toString();
     }
     
     /**
-     * Busca recursivamente un componente por nombre en el árbol.
+     * Clona el árbol maestro pero solo retiene las hojas seleccionadas y sus grupos padre.
+     * Retorna null si la rama no contiene ningún elemento seleccionado.
      */
-    private static ComponenteSensor buscarEnArbol(ComponenteSensor raiz, String nombre) {
-        if (raiz.getNombre().equals(nombre)) return raiz;
-        for (ComponenteSensor hijo : raiz.getHijos()) {
-            ComponenteSensor encontrado = buscarEnArbol(hijo, nombre);
-            if (encontrado != null) return encontrado;
+    private static ComponenteSensor clonarRama(ComponenteSensor original, List<String> seleccionados) {
+        // Si es una hoja
+        if (original.getHijos().isEmpty()) {
+            if (seleccionados.contains(original.getNombre())) {
+                return new SensorEstatico(original.getNombre());
+            }
+            return null;
         }
+        
+        // Si es un grupo
+        GrupoSensor clonGrupo = new GrupoSensor(original.getNombre());
+        boolean tieneHijosSeleccionados = false;
+        
+        for (ComponenteSensor hijoOriginal : original.getHijos()) {
+            ComponenteSensor hijoClonado = clonarRama(hijoOriginal, seleccionados);
+            if (hijoClonado != null) {
+                clonGrupo.agregar(hijoClonado);
+                tieneHijosSeleccionados = true;
+            }
+        }
+        
+        if (tieneHijosSeleccionados || seleccionados.contains(original.getNombre())) {
+            return clonGrupo;
+        }
+        
         return null;
     }
 
@@ -72,7 +86,7 @@ public class GestorSensoresDron {
         String tipo = nodo.getHijos().isEmpty() ? "(Hoja)" : "(Grupo)";
         sb.append(indent).append("- ").append(nodo.getNombre()).append(" ").append(tipo).append("\n");
         
-        // Polimorfismo del Composite: Si es hoja, no entra al loop. Si es grupo, procesa recursivamente.
+        // Polimorfismo del Composite
         for (ComponenteSensor hijo : nodo.getHijos()) {
             formatearEstructura(hijo, nivel + 1, sb);
         }
