@@ -10,6 +10,10 @@ import com.drone.servicios.ControlBasico;
 import com.drone.servicios.DroneBasico;
 import com.drone.servicios.DroneComponent;
 import com.drone.servicios.TipoControl;
+import com.drone.servicios.ComponenteSensor;
+import com.drone.servicios.GeneradorCompositeSensores;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -57,6 +61,7 @@ public class DroneView extends VBox {
     private Button btnUpdate;
     private Button btnDelete;
     private Button btnClear;
+    private Button btnShowComposite;
 
     // --- PATRON BRIDGE: RadioButtons de Tipo de Control (OPCIONALES) ---
     private ToggleGroup controlGroup;
@@ -66,6 +71,9 @@ public class DroneView extends VBox {
 
     // --- PATRON DECORATOR: CheckBox para Extra (OPCIONAL) ---
     private CheckBox chkBateria;
+
+    // --- PATRON COMPOSITE: Selector de Sensores (OPCIONAL) ---
+    private ListView<String> listaSensores;
 
     // Dron actualmente seleccionado en la tabla (modo edicion)
     private Drone selectedDrone;
@@ -155,6 +163,22 @@ public class DroneView extends VBox {
         decoratorBox.setPadding(new Insets(5, 0, 5, 0));
 
         // ----------------------------------------------------------------
+        // SECCION 3.6: Patron Composite - Selector de Sensores (OPCIONAL)
+        // ----------------------------------------------------------------
+        listaSensores = new ListView<>();
+        listaSensores.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        listaSensores.setPrefHeight(100);
+        listaSensores.getItems().add("Ninguno (Sin sensores)");
+        
+        List<String> nombresSensores = new ArrayList<>();
+        extraerNombres(GeneradorCompositeSensores.crearArbolSensores(), nombresSensores);
+        listaSensores.getItems().addAll(nombresSensores);
+
+        Label lblComposite = new Label("Seleccionar Sensores (Mantén Ctrl para múltiple):");
+        HBox compositeBox = new HBox(12, lblComposite, listaSensores);
+        compositeBox.setPadding(new Insets(5, 0, 5, 0));
+
+        // ----------------------------------------------------------------
         // SECCION 4: Botones de accion CRUD
         // ----------------------------------------------------------------
         btnAddFactory = new Button("Crear Dron (Factory)");
@@ -170,8 +194,11 @@ public class DroneView extends VBox {
 
         btnClear = new Button("Limpiar Formulario");
         btnClear.setOnAction(e -> clearForm());
+        
+        btnShowComposite = new Button("Sensores (Composite)");
+        btnShowComposite.setOnAction(e -> mostrarCompositeAction());
 
-        HBox actionBox = new HBox(10, btnAddFactory, btnUpdate, btnDelete, btnClear);
+        HBox actionBox = new HBox(10, btnAddFactory, btnUpdate, btnDelete, btnClear, btnShowComposite);
 
         // ----------------------------------------------------------------
         // SECCION 5: Tabla de drones
@@ -247,7 +274,7 @@ public class DroneView extends VBox {
         });
 
         // Agregar todos los nodos al VBox principal
-        getChildren().addAll(topBox, formPane, bridgeBox, decoratorBox, actionBox, table);
+        getChildren().addAll(topBox, formPane, bridgeBox, decoratorBox, compositeBox, actionBox, table);
     }
 
     // ----------------------------------------------------------------
@@ -334,6 +361,7 @@ public class DroneView extends VBox {
         pesoField.clear();
         capacidadField.clear();
         termicaCheck.setSelected(false);
+        if (listaSensores != null) listaSensores.getSelectionModel().clearSelection();
 
         tipoCombo.setDisable(false);
         table.getSelectionModel().clearSelection();
@@ -429,7 +457,8 @@ public class DroneView extends VBox {
                          "Fabrica concreta usada: [" + fabricaConcreta + "]\n" +
                          "Espacio de memoria (hashCode): " + d.hashCode() +
                          textoControl(d, "Factory Method", fabricaConcreta) +   // <-- Bridge
-                         textoDecorator(d, "Factory Method");                   // <-- Decorator
+                         textoDecorator(d, "Factory Method") +                  // <-- Decorator
+                         textoComposite(d.getSerial());                         // <-- Composite
 
             showScrollableAlert("Factory Method", msg);
             clearForm();
@@ -453,7 +482,8 @@ public class DroneView extends VBox {
                          "Capacidad: 150 Litros\n" +
                          "Espacio de memoria (hashCode): " + a.hashCode() +
                          textoControl(a, "Builder Pattern", "Builder -> buildAndSave()") +   // <-- Bridge
-                         textoDecorator(a, "Builder Pattern");                              // <-- Decorator
+                         textoDecorator(a, "Builder Pattern") +                             // <-- Decorator
+                         textoComposite(a.getSerial());                                     // <-- Composite
 
             showScrollableAlert("Builder Pattern", msg);
         } catch (Exception e) {
@@ -475,7 +505,8 @@ public class DroneView extends VBox {
                          "Memoria ORIGINAL: " + original.hashCode() + "\n" +
                          "Memoria CLON:     " + clon.hashCode() +
                          textoControl(clon, "Prototype Pattern", "Prototype -> cloneAndSave()") +   // <-- Bridge
-                         textoDecorator(clon, "Prototype Pattern");                                // <-- Decorator
+                         textoDecorator(clon, "Prototype Pattern") +                               // <-- Decorator
+                         textoComposite(clon.getSerial());                                         // <-- Composite
 
             showScrollableAlert("Prototype Pattern", msg);
             clearForm();
@@ -513,7 +544,8 @@ public class DroneView extends VBox {
             
             String msg = "El dron con ID " + idActual + " fue actualizado exitosamente." +
                          textoControl(dronActualizado, "Actualizacion Directa", "CRUD Update") +
-                         textoDecorator(dronActualizado, "Actualizacion Directa");
+                         textoDecorator(dronActualizado, "Actualizacion Directa") +
+                         textoComposite(dronActualizado.getSerial());
 
             refreshTable();
             showScrollableAlert("Dron Actualizado", msg);
@@ -587,5 +619,74 @@ public class DroneView extends VBox {
         if (okButton != null) okButton.getStyleClass().add("default");
 
         dialog.showAndWait();
+    }
+
+    // ----------------------------------------------------------------
+    // SECCION: Demostracion del Patron Composite (Placebo)
+    // ----------------------------------------------------------------
+    
+    /**
+     * Extrae recursivamente los nombres de los nodos del árbol.
+     */
+    private void extraerNombres(ComponenteSensor nodo, List<String> lista) {
+        lista.add(nodo.getNombre());
+        for (ComponenteSensor hijo : nodo.getHijos()) {
+            extraerNombres(hijo, lista);
+        }
+    }
+
+    /**
+     * Retorna el texto formateado delegando la logica al servicio GestorSensoresDron
+     * para agregarlo al popup de la creación/actualización del dron.
+     */
+    private String textoComposite(String idDron) {
+        List<String> seleccionados = listaSensores.getSelectionModel().getSelectedItems();
+        return com.drone.servicios.GestorSensoresDron.acoplarYGenerarTexto(seleccionados, idDron);
+    }
+
+    /**
+     * Muestra una ventana (placebo) con la jerarquia del Patron Composite de Sensores.
+     * Lee la estructura generada dinamicamente en memoria y la renderiza en un TreeView.
+     */
+    private void mostrarCompositeAction() {
+        // 1. Obtener el arbol estatico desde la capa de servicios
+        ComponenteSensor raizComposite = GeneradorCompositeSensores.crearArbolSensores();
+        
+        // 2. Construir el componente visual TreeItem raiz recursivamente
+        TreeItem<String> rootItem = poblarTreeItem(raizComposite);
+        rootItem.setExpanded(true); // Expandir la raiz por defecto
+        
+        // 3. Crear el componente TreeView
+        TreeView<String> treeView = new TreeView<>(rootItem);
+        
+        // 4. Configurar y mostrar el Dialog / Ventana Emergente
+        VBox content = new VBox(treeView);
+        VBox.setVgrow(treeView, Priority.ALWAYS);
+        content.setPrefSize(400, 500);
+        content.setPadding(new Insets(10));
+        
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Demostracion Patron Composite - Sensores");
+        dialog.setHeaderText("Estructura Jerarquica de Sensores en Memoria");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        
+        dialog.showAndWait();
+    }
+
+    /**
+     * Metodo recursivo para convertir la jerarquia Composite (ComponenteSensor)
+     * a la jerarquia visual de JavaFX (TreeItem).
+     */
+    private TreeItem<String> poblarTreeItem(ComponenteSensor componente) {
+        TreeItem<String> item = new TreeItem<>(componente.getNombre());
+        item.setExpanded(true); // Expandir todos los niveles
+        
+        // Si el componente tiene hijos, iterar y agregarlos de forma recursiva
+        for (ComponenteSensor hijo : componente.getHijos()) {
+            item.getChildren().add(poblarTreeItem(hijo));
+        }
+        
+        return item;
     }
 }
