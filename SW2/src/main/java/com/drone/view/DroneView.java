@@ -11,7 +11,6 @@ import com.drone.servicios.DroneBasico;
 import com.drone.servicios.DroneComponent;
 import com.drone.servicios.TipoControl;
 import com.drone.servicios.ComponenteSensor;
-import com.drone.servicios.GeneradorCompositeSensores;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
@@ -62,6 +61,7 @@ public class DroneView extends HBox {
     private Button btnDelete;
     private Button btnClear;
     private Button btnShowComposite;
+    private Button btnExportarAdapter;
 
     // --- PATRON BRIDGE: RadioButtons de Tipo de Control (OPCIONALES) ---
     private ToggleGroup controlGroup;
@@ -98,7 +98,10 @@ public class DroneView extends HBox {
         btnClonePrototype.setOnAction(e -> cloneViaPrototype());
         btnClonePrototype.setDisable(true);
 
-        HBox topBox = new HBox(10, btnTestSingleton, btnAddBuilder, btnClonePrototype);
+        btnExportarAdapter = new Button("Exportar Misión a JSON (Adapter)");
+        btnExportarAdapter.setOnAction(e -> exportarMisionAction());
+
+        HBox topBox = new HBox(10, btnTestSingleton, btnAddBuilder, btnClonePrototype, btnExportarAdapter);
 
         // ----------------------------------------------------------------
         // SECCION 2: Formulario de datos del dron
@@ -170,7 +173,7 @@ public class DroneView extends HBox {
         checkBoxesSensores = new ArrayList<>();
         
         // Construimos el menu respetando la jerarquía visual
-        construirMenuSensores(GeneradorCompositeSensores.crearArbolSensores(), menuSensores, "", true);
+        construirMenuSensores(controller.obtenerArbolMaestroSensores(), menuSensores, "", true);
 
         Label lblComposite = new Label("Seleccionar Sensores:");
         HBox compositeBox = new HBox(12, lblComposite, menuSensores);
@@ -685,16 +688,31 @@ public class DroneView extends HBox {
                 }
             }
         }
-        return com.drone.servicios.GestorSensoresDron.acoplarYGenerarTexto(seleccionados, idDron);
+        return controller.obtenerTrazaSensores(seleccionados, idDron);
     }
 
     /**
      * Muestra una ventana (placebo) con la jerarquia del Patron Composite de Sensores.
      * Lee la estructura generada dinamicamente en memoria y la renderiza en un TreeView.
      */
+    // ----------------------------------------------------------------
+    // SECCION: Demostración del Patrón Adapter (Placebo)
+    // ----------------------------------------------------------------
+
+    /**
+     * Acción del botón "Exportar Misión a JSON (Adapter)".
+     * Si hay un dron seleccionado en la tabla, lo incluye en la misión.
+     * La Vista NO tiene lógica de negocio: solo le pide el resultado
+     * al Controlador y lo muestra en un diálogo scrollable.
+     */
+    private void exportarMisionAction() {
+        String resultado = controller.exportarMisionJson(selectedDrone);
+        showScrollableAlert("Patrón Adapter - Exportar Misión JSON", resultado);
+    }
+
     private void mostrarCompositeAction() {
         // 1. Obtener el arbol estatico desde la capa de servicios
-        ComponenteSensor raizComposite = GeneradorCompositeSensores.crearArbolSensores();
+        ComponenteSensor raizComposite = controller.obtenerArbolMaestroSensores();
         
         // 2. Construir el componente visual TreeItem raiz recursivamente
         TreeItem<String> rootItem = poblarTreeItem(raizComposite);

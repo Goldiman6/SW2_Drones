@@ -10,6 +10,13 @@ import com.drone.servicios.CrearAgricultura;
 import com.drone.servicios.CrearVigilancia;
 import com.drone.servicios.FactoryCreator;
 import com.drone.servicios.Prototype;
+import com.drone.servicios.ComponenteSensor;
+import com.drone.servicios.GeneradorCompositeSensores;
+import com.drone.servicios.GestorSensoresDron;
+import com.drone.servicios.ExportadorFormato;
+import com.drone.servicios.MisionJsonAdapter;
+import com.drone.model.Mision;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -221,5 +228,63 @@ public class DroneController {
     public void deleteDrone(String id) throws Exception {
         boolean ok = droneDAO.eliminarDrone(id);
         if (!ok) throw new Exception("No se pudo eliminar el dron con ID: " + id);
+    }
+
+    // ----------------------------------------------------------------
+    // DELEGACIÓN DEL PATRÓN COMPOSITE (STRICT MVC)
+    // ----------------------------------------------------------------
+
+    /**
+     * Obtiene el árbol maestro de sensores desde la capa de servicios.
+     * La Vista llama a este método para construir el menú dinámico.
+     */
+    public ComponenteSensor obtenerArbolMaestroSensores() {
+        return GeneradorCompositeSensores.crearArbolSensores();
+    }
+
+    /**
+     * Delega la creación de la traza jerárquica del Composite al servicio GestorSensoresDron.
+     */
+    public String obtenerTrazaSensores(List<String> seleccionados, String droneId) {
+        return GestorSensoresDron.acoplarYGenerarTexto(seleccionados, droneId);
+    }
+
+    // ----------------------------------------------------------------
+    // DELEGACIÓN DEL PATRÓN ADAPTER (STRICT MVC)
+    // ----------------------------------------------------------------
+
+    /**
+     * Método puente del Controlador hacia el patrón Adapter.
+     *
+     * Crea una Mision de prueba con datos hardcodeados (sin tocar la BD),
+     * instancia el MisionJsonAdapter pasándole la misión, y delega
+     * la exportación al Adapter. Retorna el mensaje resultante a la Vista.
+     *
+     * Flujo MVC:
+     *   Vista -> Controlador -> Adapter (Servicio) -> ExportadorFormato (Target)
+     *
+     * @return Mensaje de resultado de la exportación simulada.
+     */
+    public String exportarMisionJson(Drone dronSeleccionado) {
+        // 1. Armar la lista de drones de la misión
+        List<Drone> dronesEnMision = new ArrayList<>();
+        if (dronSeleccionado != null) {
+            dronesEnMision.add(dronSeleccionado);
+        }
+
+        // 2. Crear Mision con datos de prueba + el dron seleccionado (si existe)
+        Mision misionPrueba = new Mision(
+            "MSN-001",
+            "Reconocimiento Zona Norte",
+            "Coordenadas: 4.7110° N, 74.0721° O",
+            "2026-09-19",
+            dronesEnMision
+        );
+
+        // 3. Instanciar el Adapter (envuelve la Mision incompatible)
+        ExportadorFormato adapter = new MisionJsonAdapter(misionPrueba);
+
+        // 4. Llamar al método del Target y retornar resultado a la Vista
+        return adapter.exportar();
     }
 }
