@@ -2,7 +2,7 @@ package com.drone.servicios;
 
 /**
  * Generador Estático del árbol Composite.
- * Construye y devuelve la raíz de la jerarquía según el diagrama proporcionado.
+ * Construye y devuelve la raíz de la jerarquía según la nueva especificación.
  */
 public class GeneradorCompositeSensores {
 
@@ -14,28 +14,31 @@ public class GeneradorCompositeSensores {
         ComponenteSensor sensorTemperatura = new GrupoSensor("Sensor Temperatura");
         ComponenteSensor sensorCamara = new GrupoSensor("Sensor Cámara");
         ComponenteSensor sensorSonido = new GrupoSensor("Sensor Sonido");
+        ComponenteSensor sensorInteligente = new GrupoSensor("Sensor Inteligente");
         
         // --- 3. Crear hojas del grupo Temperatura ---
         sensorTemperatura.agregar(new SensorEstatico("Sensor Infrarrojo"));
         sensorTemperatura.agregar(new SensorEstatico("RTD"));
         
+        
         // --- 4. Crear hojas del grupo Cámara ---
         sensorCamara.agregar(new SensorEstatico("Sensor CMOS"));
         sensorCamara.agregar(new SensorEstatico("Sensor CCD"));
         
-        // --- 5. Crear grupo Sonido y sus componentes ---
-        sensorSonido.agregar(new SensorEstatico("Sensor Analógico"));
+        // --- 5. Grupo Sonido 
         
+        // --- 6. Inteligente 
+        ComponenteSensor sensorAnalogico = new SensorEstatico("Sensor Analógico");
         ComponenteSensor sensorDigital = new GrupoSensor("Sensor Digital");
+        
+        // Digital hijos
         sensorDigital.agregar(new SensorEstatico("SPI"));
         sensorDigital.agregar(new SensorEstatico("UART"));
         
-        sensorSonido.agregar(sensorDigital); // Digital es hijo de Sonido
+        sensorInteligente.agregar(sensorAnalogico);
+        sensorInteligente.agregar(sensorDigital);
         
-        // --- 6. Crear el Sensor Inteligente (Hoja suelta) ---
-        ComponenteSensor sensorInteligente = new SensorEstatico("Sensor Inteligente");
-        
-        // --- 7. Añadir los grupos principales y la hoja suelta a la Raíz ---
+        // --- 7. Añadir los grupos principales a la Raíz ---
         sensorGeneral.agregar(sensorTemperatura);
         sensorGeneral.agregar(sensorCamara);
         sensorGeneral.agregar(sensorSonido);

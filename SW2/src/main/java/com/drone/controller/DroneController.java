@@ -13,12 +13,27 @@ import com.drone.servicios.Prototype;
 import com.drone.servicios.ComponenteSensor;
 import com.drone.servicios.GeneradorCompositeSensores;
 import com.drone.servicios.GestorSensoresDron;
+import com.drone.servicios.SistemaDronesFacade;
 import com.drone.servicios.ExportadorFormato;
 import com.drone.servicios.MisionJsonAdapter;
-import com.drone.model.Mision;
+import com.drone.servicios.GeneradorReporteLegado;
+import com.drone.servicios.IDroneService;
+import com.drone.servicios.DroneProxyService;
+import com.drone.servicios.DroneProxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 /**
  * Controlador de Drones (componente 'Controller' del patron MVC).
@@ -69,9 +84,9 @@ public class DroneController {
             Singleton s1 = Singleton.getInstance();
             Singleton s2 = Singleton.getInstance();
 
-            int hashConn1 = s1.getConnection().hashCode();
-            int hashConn2 = s2.getConnection().hashCode();
             boolean connected = s1.getConnection() != null;
+            String hashConn1 = connected ? String.valueOf(s1.getConnection().hashCode()) : "null";
+            String hashConn2 = s2.getConnection() != null ? String.valueOf(s2.getConnection().hashCode()) : "null";
 
             return "--- PRUEBA DEL PATRON SINGLETON ---\n\n" +
                    "Instancia 1 (Singleton) hashCode: " + s1.hashCode() + "\n" +
@@ -79,7 +94,7 @@ public class DroneController {
                    "Son la misma instancia? : " + (s1 == s2 ? "SI" : "NO") + "\n\n" +
                    "Conexion BD 1 hashCode: " + hashConn1 + "\n" +
                    "Conexion BD 2 hashCode: " + hashConn2 + "\n" +
-                   "Comparten la misma conexion real? : " + (hashConn1 == hashConn2 ? "SI" : "NO") + "\n\n" +
+                   "Comparten la misma conexion real? : " + (s1.getConnection() != null && s1.getConnection() == s2.getConnection() ? "SI" : "NO") + "\n\n" +
                    "Estado de Conexion: " + (connected ? "ACTIVA" : "INACTIVA");
         } catch (Exception e) {
             return "Error al probar Singleton: " + e.getMessage();
@@ -205,9 +220,10 @@ public class DroneController {
      * @param peso      Nuevo peso
      * @param capacidad Nueva capacidad del tanque (Agricultura)
      * @param termica   Nuevo valor de deteccion termica (Vigilancia)
+     * @return 
      * @throws Exception Si el DAO no puede actualizar el registro.
      */
-    public void updateDrone(String id, String tipo, String serial, String modelo,
+    public Drone updateDrone(String id, String tipo, String serial, String modelo,
                              String fabricante, double peso, double capacidad, boolean termica) throws Exception {
         Drone d;
         if ("Agricultura".equalsIgnoreCase(tipo)) {
@@ -217,74 +233,160 @@ public class DroneController {
         }
         boolean ok = droneDAO.actualizarDrone(d);
         if (!ok) throw new Exception("No se pudo actualizar el dron con ID: " + id);
+		return d;
     }
 
     /**
      * Elimina un dron de la base de datos por su ID.
      *
      * @param id ID del dron a eliminar.
-     * @throws Exception Si el DAO no puede eliminar el registro.
+     * @throws Exception Si la contrasena es incorrecta o el DAO falla.
      */
-    public void deleteDrone(String id) throws Exception {
-        boolean ok = droneDAO.eliminarDrone(id);
-        if (!ok) throw new Exception("No se pudo eliminar el dron con ID: " + id);
+            public void deleteDrone(String id) throws Exception {
+        // El Controlador SOLO maneja los elementos visuales de JavaFX.
+        Stage popupStage = new Stage();
+        popupStage.initModality(Modality.APPLICATION_MODAL);
+        popupStage.setTitle("Autenticacion Requerida - Patron Proxy");
+        popupStage.setResizable(false);
+
+        Label lblTitulo = new Label("PATRON PROXY — Verificacion de Acceso");
+        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 13));
+        lblTitulo.setTextFill(Color.DARKRED);
+
+        Label lblMensaje = new Label("Para eliminar el Dron [ID: " + id + "]\ningrese la contrasena de administrador:");
+        lblMensaje.setWrapText(true);
+
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Contrasena...");
+
+        Label lblError = new Label();
+        lblError.setTextFill(Color.RED);
+        lblError.setFont(Font.font("System", FontWeight.BOLD, 12));
+
+        final boolean[] eliminado = {false};
+
+        Button btnConfirmar = new Button("Confirmar Eliminacion");
+        btnConfirmar.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold;");
+        
+        btnConfirmar.setOnAction(e -> {
+            String passwordDigitada = passwordField.getText();
+            
+            try {
+                // [PATRON PROXY] El Controlador NO valida la contraseña.
+                // Se la entrega al Proxy y delega el control de acceso a él.
+                IDroneService servicioReal = new DroneProxyService(droneDAO);
+                IDroneService proxy = new DroneProxy(servicioReal, passwordDigitada);
+                
+                // Si el Proxy aprueba, eliminará. Si no, lanzará la Exception que capturamos abajo.
+                proxy.eliminarDrone(id); 
+                
+                eliminado[0] = true;
+                popupStage.close();
+            } catch (Exception ex) {
+                // El Proxy rechazó el acceso
+                lblError.setText(ex.getMessage());
+                passwordField.clear();
+            }
+        });
+
+        passwordField.setOnAction(e -> btnConfirmar.fire());
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.setOnAction(e -> {
+            popupStage.close();
+        });
+
+        HBox botonesBox = new HBox(10, btnConfirmar, btnCancelar);
+        botonesBox.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox layout = new VBox(12, lblTitulo, new Separator(), lblMensaje, passwordField, lblError, botonesBox);
+        layout.setPadding(new Insets(20));
+        layout.setMinWidth(420);
+
+        popupStage.setScene(new Scene(layout));
+        popupStage.showAndWait();
+
+        // Si cerró la ventana sin eliminar (Cancelar o X), cortamos el flujo para que la Vista no lance success.
+        if (!eliminado[0]) {
+            throw new Exception("Operacion cancelada.");
+        }
     }
 
     // ----------------------------------------------------------------
-    // DELEGACIÓN DEL PATRÓN COMPOSITE (STRICT MVC)
+    // DELEGACION DEL PATRON COMPOSITE (STRICT MVC)
     // ----------------------------------------------------------------
 
     /**
-     * Obtiene el árbol maestro de sensores desde la capa de servicios.
-     * La Vista llama a este método para construir el menú dinámico.
+     * Obtiene el ÃƒÂ¡rbol maestro de sensores desde la capa de servicios.
+     * La Vista llama a este mÃƒÂ©todo para construir el menÃƒÂº dinÃƒÂ¡mico.
      */
     public ComponenteSensor obtenerArbolMaestroSensores() {
         return GeneradorCompositeSensores.crearArbolSensores();
     }
 
     /**
-     * Delega la creación de la traza jerárquica del Composite al servicio GestorSensoresDron.
+     * Delega la creacion de la traza jerarquica del Composite al servicio GestorSensoresDron.
      */
     public String obtenerTrazaSensores(List<String> seleccionados, String droneId) {
         return GestorSensoresDron.acoplarYGenerarTexto(seleccionados, droneId);
     }
 
     // ----------------------------------------------------------------
-    // DELEGACIÓN DEL PATRÓN ADAPTER (STRICT MVC)
+    // DELEGACION DEL PATRON FACADE (STRICT MVC)
     // ----------------------------------------------------------------
 
     /**
-     * Método puente del Controlador hacia el patrón Adapter.
+     * MÃ©todo puente del Controlador hacia el patrÃ³n Facade.
      *
-     * Crea una Mision de prueba con datos hardcodeados (sin tocar la BD),
-     * instancia el MisionJsonAdapter pasándole la misión, y delega
-     * la exportación al Adapter. Retorna el mensaje resultante a la Vista.
+     * El Cliente (Vista) pasa todos los parÃ¡metros de configuraciÃ³n.
+     * El Controlador instancia el Facade y delega la orquestaciÃ³n completa.
+     * El Facade coordina internamente: Bridge + Decorator + Composite.
      *
      * Flujo MVC:
-     *   Vista -> Controlador -> Adapter (Servicio) -> ExportadorFormato (Target)
+     *   Vista -> DroneController -> SistemaDronesFacade -> [Bridge | Decorator | Composite]
      *
-     * @return Mensaje de resultado de la exportación simulada.
+     * @param drone               El Drone ya creado y persistido.
+     * @param patronOrigen        Nombre del patrÃ³n que creÃ³ el Drone.
+     * @param claseOrigen         Clase concreta usada en la creaciÃ³n.
+     * @param tipoControl         "basico" | "autonomo" | null.
+     * @param usaBateria          true si se aplica el Decorator de baterÃ­a.
+     * @param sensoresSeleccionados Sensores marcados en el MenuButton.
+     * @return Traza unificada de los 3 subsistemas orquestados por el Facade.
+     */
+    public String ejecutarFacade(Drone drone,
+                                  String tipoControl,
+                                  boolean usaBateria,
+                                  List<String> sensoresSeleccionados) {
+        SistemaDronesFacade facade = new SistemaDronesFacade(tipoControl, usaBateria, drone);
+        return facade.generarDiagnosticoCompleto(drone, sensoresSeleccionados);
+    }
+
+    // ----------------------------------------------------------------
+    // DELEGACION DEL PATRON ADAPTER (STRICT MVC)
+    // ----------------------------------------------------------------
+
+    /**
+     * Metodo puente del Controlador hacia el patron Adapter.
+     *
+     * El Controlador (Cliente) NO crea la Mision. Solo instancia el Adapter
+     * pasandole el Sistema Legado (Adaptee). El Adapter llama al legado,
+     * recibe el XML, lo traduce a JSON y retorna el resultado.
+     *
+     * Flujo MVC:
+     *   Vista -> Controlador -> MisionJsonAdapter -> GeneradorReporteLegado (XML->JSON)
+     *
+     * @param dronSeleccionado Dron opcional seleccionado en la UI.
+     * @return Traza completa con XML del legado y JSON final.
      */
     public String exportarMisionJson(Drone dronSeleccionado) {
-        // 1. Armar la lista de drones de la misión
-        List<Drone> dronesEnMision = new ArrayList<>();
-        if (dronSeleccionado != null) {
-            dronesEnMision.add(dronSeleccionado);
-        }
-
-        // 2. Crear Mision con datos de prueba + el dron seleccionado (si existe)
-        Mision misionPrueba = new Mision(
-            "MSN-001",
-            "Reconocimiento Zona Norte",
-            "Coordenadas: 4.7110° N, 74.0721° O",
-            "2026-09-19",
-            dronesEnMision
-        );
-
-        // 3. Instanciar el Adapter (envuelve la Mision incompatible)
-        ExportadorFormato adapter = new MisionJsonAdapter(misionPrueba);
-
-        // 4. Llamar al método del Target y retornar resultado a la Vista
+        // [PATRON ADAPTER - Opcion B] El Controlador NO conoce la clase Mision.
+        // Solo instancia el Adapter pasandole el sistema legado y el dron opcional.
+        GeneradorReporteLegado sistemaLegado = new GeneradorReporteLegado();
+        ExportadorFormato adapter = new MisionJsonAdapter(sistemaLegado, dronSeleccionado);
         return adapter.exportar();
     }
 }
+
+
+
+

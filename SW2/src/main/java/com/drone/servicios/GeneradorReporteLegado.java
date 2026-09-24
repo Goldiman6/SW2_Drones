@@ -1,42 +1,47 @@
-﻿package com.drone.servicios;
+package com.drone.servicios;
+
+import com.drone.model.Drone;
 
 /**
  * ============================================================
  * ADAPTEE - Patrón Adapter
  * ============================================================
- * Simula un sistema LEGADO / INCOMPATIBLE que ya existe en la
- * empresa y no puede modificarse (p.ej.: un generador de reportes
- * de una librería externa o un sistema antiguo).
+ * Representa un sistema antiguo o externo que procesa datos de
+ * misiones y DEVUELVE ÚNICAMENTE FORMATO XML.
  *
- * Su interfaz es INCOMPATIBLE con lo que el cliente espera:
- *   - El cliente espera:   exportar()
- *   - Esta clase tiene:    generarReporteXml(String, String, String, String, int)
- *
- * Por eso se necesita un Adapter que traduzca entre ambas.
+ * El Cliente (Controlador) no sabe interactuar con esto porque
+ * el Cliente espera recibir un formato JSON.
  */
 public class GeneradorReporteLegado {
 
     /**
-     * Método de la clase legada: firma TOTALMENTE DIFERENTE al Target.
-     * Genera un reporte en formato XML-like usando parámetros individuales
-     * (no recibe un objeto Mision, no devuelve en formato JSON).
-     *
-     * @param id         ID de la misión
-     * @param nombre     Nombre de la misión
-     * @param ubicacion  Ubicación de la misión
-     * @param fecha      Fecha de la misión
-     * @param numDrones  Cantidad de drones asignados
-     * @return           Reporte en formato XML-like (incompatible con el cliente)
+     * Simula una consulta a una base de datos antigua que escupe un XML.
+     * 
+     * @param dronAdicional Dron opcional seleccionado en la UI para incluir en la misión.
+     * @return String con estructura XML estricta.
      */
-    public String generarReporteXml(String id, String nombre,
-                                     String ubicacion, String fecha,
-                                     int numDrones) {
-        return "<mision>\n" +
-               "  <id>" + id + "</id>\n" +
-               "  <nombre>" + nombre + "</nombre>\n" +
-               "  <ubicacion>" + ubicacion + "</ubicacion>\n" +
-               "  <fecha>" + fecha + "</fecha>\n" +
-               "  <totalDrones>" + numDrones + "</totalDrones>\n" +
-               "</mision>";
+    public String obtenerReporteXml(Drone dronAdicional) {
+        StringBuilder xml = new StringBuilder();
+        xml.append("<mision>\n");
+        xml.append("  <id>MSN-LEGACY-001</id>\n");
+        xml.append("  <nombre>Operación Backend Antiguo</nombre>\n");
+        xml.append("  <ubicacion>Base de Datos Oculta</ubicacion>\n");
+        xml.append("  <fecha>2026-10-31</fecha>\n");
+        
+        if (dronAdicional != null) {
+            xml.append("  <totalDrones>1</totalDrones>\n");
+            xml.append("  <drones>\n");
+            xml.append("    <dron>\n");
+            xml.append("      <id>").append(dronAdicional.getId()).append("</id>\n");
+            xml.append("      <serial>").append(dronAdicional.getSerial()).append("</serial>\n");
+            xml.append("    </dron>\n");
+            xml.append("  </drones>\n");
+        } else {
+            xml.append("  <totalDrones>0</totalDrones>\n");
+            xml.append("  <drones></drones>\n");
+        }
+        xml.append("</mision>");
+        
+        return xml.toString();
     }
 }
